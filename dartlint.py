@@ -3,6 +3,9 @@ import sublime
 import sublime_plugin
 import subprocess
 import threading
+# import thread
+# import functools
+# import time
 
 
 class DartLintCommand(sublime_plugin.TextCommand):
@@ -12,22 +15,17 @@ class DartLintCommand(sublime_plugin.TextCommand):
         name = self.view.file_name()
 
         working_directory = os.path.dirname(name)
-        print('  |-> Working dir: %s' % working_directory)
 
         # for now let's just use the working dir
         project_root = working_directory
-        print('  |-> Project root: %s' % project_root)
-
-        print('  |-> File to analyze: %s' % os.path.basename(name))
 
         settings = self.view.settings()
         dartsdk_path = settings.get('dartsdk_path')
 
         if not dartsdk_path:
-            print('  |-> ERROR: Cannot find Dart SDK')
+            print('Oh snap! Cannot find Dart SDK')
             dartsdk_path = '/Users/jonkirkman/Development/dart/dart-sdk'
 
-        # analyzer_path = os.path.join(dartsdk_path, 'bin', 'dartanalyzer')
         args = [
             os.path.join(dartsdk_path, 'bin', 'dartanalyzer'),
             '--machine',
@@ -35,11 +33,10 @@ class DartLintCommand(sublime_plugin.TextCommand):
             os.path.join(project_root, 'packages'),
             name
         ]
+
         try:
-            subprocess.check_output(args, universal_newlines=True)
+            subprocess.check_output(args, universal_newlines=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
-            print('returncode: %s' % e.returncode)
-            print('cmd: %s' % e.cmd)
             print('output: %s' % e.output)
 
     def findProjectRoot():

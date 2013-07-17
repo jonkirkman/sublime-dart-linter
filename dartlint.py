@@ -3,9 +3,6 @@ import sublime
 import sublime_plugin
 import subprocess
 import threading
-# import thread
-# import functools
-# import time
 
 
 class DartLintCommand(sublime_plugin.TextCommand):
@@ -34,21 +31,25 @@ class DartLintCommand(sublime_plugin.TextCommand):
             name
         ]
 
+        region_set = []
+        self.view.erase_regions('issues')
+
         try:
             subprocess.check_output(args, universal_newlines=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
-            print('output: %s' % e.output)
+            # self.parseResults(e.output)
+            for issue in e.output.splitlines():
+                part = issue.split('|')
+                if part[3] == name:
+                    pt = self.view.text_point(int(part[4])-1, int(part[5]))
+                    region_set.append(self.view.line(pt))
+
+        self.view.add_regions('issues', region_set, 'string', 'circle')
 
     def findProjectRoot():
         print('DARTLINT: findProjectRoot')
 
-
-class AnalyzerThread(threading.Thread):
-
-    def run(self):
-        print('...')
-
-    def parseResults():
+    def parseResults(self, report):
         # Using the --machine flag skips the summary and yields a single issue per line
         # Each line should contain the following fields, delimited by `|`
         # [0] severity
@@ -62,4 +63,14 @@ class AnalyzerThread(threading.Thread):
         # [5] location.columnNumber
         # [6] length
         # [7] error.message
-        print('...')
+        print('parseResults...')
+
+        # region_set = []
+
+        # for issue in report.splitlines():
+        #     part = issue.split('|')
+        #     pt = self.view.text_point(part[4], part[5])
+        #     region_set.append(self.view.line(pt))
+
+        # print(len(region_set))
+        # self.view.add_regions('issues', region_set, 'string', 'circle')

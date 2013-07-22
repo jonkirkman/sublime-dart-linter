@@ -2,10 +2,15 @@ import os
 import sublime
 import sublime_plugin
 import subprocess
-import threading
 
 
 class DartLintCommand(sublime_plugin.TextCommand):
+    # def __init__(self, *args, **kwargs):
+    #     sublime_plugin.EventListener.__init__(self, *args, **kwargs)
+
+    # def on_post_save(self, view):
+    #     if view.file_name().endswith('.dart'):
+    #         RunPub(view, name)
 
     def run(self, edit):
         print('DARTLINT: run')
@@ -16,6 +21,7 @@ class DartLintCommand(sublime_plugin.TextCommand):
         # for now let's just use the working dir
         project_root = working_directory
 
+        # we need to find the dartanalyzer executable
         settings = self.view.settings()
         dartsdk_path = settings.get('dartsdk_path')
 
@@ -37,7 +43,6 @@ class DartLintCommand(sublime_plugin.TextCommand):
         try:
             subprocess.check_output(args, universal_newlines=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
-            # self.parseResults(e.output)
             for issue in e.output.splitlines():
                 part = issue.split('|')
                 if part[3] == name:

@@ -4,25 +4,44 @@ import sublime_plugin
 import subprocess
 
 
-class DartLintCommand(sublime_plugin.TextCommand):
-    # def __init__(self, *args, **kwargs):
-    #     sublime_plugin.EventListener.__init__(self, *args, **kwargs)
+class DartLintPlugin(sublime_plugin.EventListener):
+    issues = []
 
-    # def on_post_save(self, view):
-    #     if view.file_name().endswith('.dart'):
-    #         RunPub(view, name)
+    def __init__(self, *args, **kwargs):
+        sublime_plugin.EventListener.__init__(self, *args, **kwargs)
 
-    def run(self, edit):
-        print('DARTLINT: run')
-        name = self.view.file_name()
+    def on_load_async(self, view):
+        print('DARTLINT: async load')
 
-        working_directory = os.path.dirname(name)
+    def on_post_save_async(self, view):
+        print('DARTLINT: post save')
+        if view.file_name().endswith('.dart'):
+            self.lint_it(view)
+    
+    def on_modified_async(self, view):
+        print('DARTLINT: modified')
+
+    def on_selection_modified(self, view):
+        print('DARTLINT: selection modified')
+        for sel in view.sel():
+            for i in self.issues:
+                if i.contains(sel):
+                    view.set_status('issues', 'blah!')
+                    return
+                else:
+                    view.erase_status('issues')
+
+    def lint_it(self, view):
+        print('DARTLINT: lint it')
+        name = view.file_name()
+
+        # working_directory = os.path.dirname(name)
 
         # for now let's just use the working dir
-        project_root = working_directory
+        # project_root = working_directory
 
         # we need to find the dartanalyzer executable
-        settings = self.view.settings()
+        settings = view.settings()
         dartsdk_path = settings.get('dartsdk_path')
 
         if not dartsdk_path:
@@ -32,13 +51,12 @@ class DartLintCommand(sublime_plugin.TextCommand):
         args = [
             os.path.join(dartsdk_path, 'bin', 'dartanalyzer'),
             '--machine',
-            '--package-root',
-            os.path.join(project_root, 'packages'),
+            # '--package-root',
+            # os.path.join(project_root, 'packages'),
             name
         ]
 
-        region_set = []
-        self.view.erase_regions('issues')
+        self.clear_issues(view)
 
         try:
             subprocess.check_output(args, universal_newlines=True, stderr=subprocess.STDOUT)
@@ -46,15 +64,15 @@ class DartLintCommand(sublime_plugin.TextCommand):
             for issue in e.output.splitlines():
                 part = issue.split('|')
                 if part[3] == name:
-                    pt = self.view.text_point(int(part[4])-1, int(part[5]))
-                    region_set.append(self.view.line(pt))
+                    pt = view.text_point(int(part[4])-1, int(part[5]))
+                    self.issues.append(view.line(pt))
 
-        self.view.add_regions('issues', region_set, 'string', 'circle')
+        self.draw_issues(view)
 
-    def findProjectRoot():
+    def find_project_root():
         print('DARTLINT: findProjectRoot')
 
-    def parseResults(self, report):
+    def parse_results(self, report):
         # Using the --machine flag skips the summary and yields a single issue per line
         # Each line should contain the following fields, delimited by `|`
         # [0] severity
@@ -79,3 +97,13 @@ class DartLintCommand(sublime_plugin.TextCommand):
 
         # print(len(region_set))
         # self.view.add_regions('issues', region_set, 'string', 'circle')
+
+    def draw_issues(self, view):
+        print('drawing %d issues'% len(self.issues))
+        view.add_regions('issues', self.issues, 'support', 'dot', sublime.DRAW_OUTLINED)
+
+    def clear_issues(self, view):
+        print('clearing %d issues'% len(self.issues))
+        self.issues = []
+        view.erase_regions('dartanalyzer')
+

@@ -72,25 +72,25 @@ class DartLintPlugin(sublime_plugin.EventListener):
         try:
             subprocess.check_output(args, universal_newlines=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as analyzer:
-            print( analyzer.output )
             self.parse_results(view, analyzer.output)
 
         self.draw_issues(view)
 
     def parse_results(self, view, analyzed):
-        # Using the --machine flag skips the summary and yields a single issue per line
-        # Each line should contain the following fields, delimited by `|`
-        # [0] severity
-        #     ERROR, WARNING, SUGGESTION
-        # [1] error.errorCode.type
-        #     HINT, COMPILE_TIME_ERROR, PUB_SUGGESTION, STATIC_WARNING,
-        #     STATIC_TYPE_WARNING, SYNTACTIC_ERROR
-        # [2] error.errorCode
-        # [3] source.fullName
-        # [4] location.lineNumber
-        # [5] location.columnNumber
-        # [6] length
-        # [7] error.message
+        """ Parse the output of dartanalyzer to a list of DartLintIssue objects.
+        Using the --machine flag skips the summary and yields a single issue per line
+        Each line should contain the following fields, delimited by `|`
+        [0] severity
+            ERROR, WARNING, SUGGESTION
+        [1] error.errorCode.type
+            HINT, COMPILE_TIME_ERROR, PUB_SUGGESTION, STATIC_WARNING,
+            STATIC_TYPE_WARNING, SYNTACTIC_ERROR
+        [2] error.errorCode
+        [3] source.fullName
+        [4] location.lineNumber
+        [5] location.columnNumber
+        [6] length
+        [7] error.message """
 
         for line in analyzed.splitlines():
             part = line.split('|')

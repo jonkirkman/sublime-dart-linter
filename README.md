@@ -11,7 +11,7 @@ The items below should really be completed before calling it alpha.
 
 ### TODO
 
-- [ ] Find dartanalyzer (check settings for path to Dart SDK)
+- [x] Find dartanalyzer (check settings for path to Dart SDK)
 - ~~[ ] Find the project root & packages directory~~
 - [x] Spawn subprocess/thread for dartanalyzer
 - [x] Parse the ouput from dartanalyzer (--machine flag might help)

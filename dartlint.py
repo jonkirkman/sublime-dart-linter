@@ -22,15 +22,19 @@ class DartLintPlugin(sublime_plugin.EventListener):
     warnings = []
     suggestions = []
 
+    dartsdk_path = ''
+
     def __init__(self, *args, **kwargs):
         sublime_plugin.EventListener.__init__(self, *args, **kwargs)
+        settings = sublime.load_settings(u'DartLint.sublime-settings')
+        self.dartsdk_path = settings.get(u'dartsdk_path')
 
     def on_load_async(self, view):
-        if view.file_name().endswith('.dart'):
+        if self.dartsdk_path and view.file_name().endswith('.dart'):
             self.lint_it(view)
 
     def on_post_save_async(self, view):
-        if view.file_name().endswith('.dart'):
+        if self.dartsdk_path and view.file_name().endswith('.dart'):
             self.lint_it(view)
 
     def on_selection_modified(self, view):
@@ -47,20 +51,16 @@ class DartLintPlugin(sublime_plugin.EventListener):
     def lint_it(self, view):
         name = view.file_name()
 
-        # we need to find the dartanalyzer executable
-        # TODO: Why doesn't this work?
-        dartsdk_path = view.settings().get('dartsdk_path')
-
-        if not dartsdk_path:
+        if not self.dartsdk_path:
             print('Oh snap! Cannot find Dart SDK')
-            dartsdk_path = '/Users/jonkirkman/Development/dart/dart-sdk'
+            return
 
         # working_directory = os.path.dirname(name)
         # for now let's just use the working dir
         # project_root = working_directory
 
         args = [
-            os.path.join(dartsdk_path, 'bin', 'dartanalyzer'),
+            os.path.join(self.dartsdk_path, 'bin', 'dartanalyzer'),
             '--machine',
             # '--package-root',
             # os.path.join(project_root, 'packages'),
@@ -89,7 +89,7 @@ class DartLintPlugin(sublime_plugin.EventListener):
         [3] source.fullName
         [4] location.lineNumber
         [5] location.columnNumber
-        [6] length
+        [6] length  
         [7] error.message """
 
         for line in analyzed.splitlines():
@@ -109,7 +109,7 @@ class DartLintPlugin(sublime_plugin.EventListener):
                 self.suggestions.append(issue)
 
     def draw_issues(self, view):
-        all = list(map(lambda x: x.region, self.errors + self.warnings + self.suggestions))
+        all = [x.region for x in (self.errors + self.warnings + self.suggestions)]
         view.add_regions('dart_lint', all, 'support', 'dot', sublime.DRAW_OUTLINED)
 
     def clear_issues(self, view):

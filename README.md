@@ -1,6 +1,8 @@
 sublime-dart-linter
 ===================
 
+**DEPRECATED** - Use the excellent [dart-sublime-bundle](https://github.com/guillermooo/dart-sublime-bundle)
+
 An attempt to leverage Dart's analyzer for linting and other nice magic in Sublime Text 3.
 
 ## Status
